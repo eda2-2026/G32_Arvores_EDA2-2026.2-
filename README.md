@@ -1,4 +1,3 @@
-[documenta_o_do_sistema (1).md](https://github.com/user-attachments/files/34717241/documenta_o_do_sistema.1.md)
 # G32_Arvores_EDA2-2026.2-# Biblioteca em Ordem — Gerenciador e Busca de Acervo
 
 ## Integrantes
