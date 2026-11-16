@@ -117,6 +117,6 @@ st.markdown("---")
 st.subheader("📖 Acervo (Ordenado por ISBN)")
 registros = [dados for _, dados in avl.em_ordem()]
 if registros:
-    st.dataframe(pd.DataFrame(registros, columns=COLUNAS), use_container_width=True)
+    st.dataframe(pd.DataFrame(registros, columns=COLUNAS))
 else:
     st.info("O acervo está vazio.")
