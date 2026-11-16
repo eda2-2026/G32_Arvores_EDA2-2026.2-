@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import streamlit as st
 
-from src.avl_tree import ArvoreAVL
+from src.analise import medir_tempos_construcao, medir_tempo_busca
 
 CAMINHO_CSV = os.path.join("dados", "livros.csv")
 COLUNAS = ["isbn", "titulo", "autor", "genero", "status_leitura"]
@@ -19,21 +19,22 @@ def carregar_csv():
         return df[COLUNAS]
     return pd.DataFrame(columns=COLUNAS)
 
+# Carregamento e montagem inicial (executado apenas uma vez e armazenado em sessão)
+if "avl" not in st.session_state:
+    with st.spinner("Construindo árvores e analisando dados..."):
+        df_inicial = carregar_csv()
+        avl, rb, t_avl, t_rb = medir_tempos_construcao(df_inicial)
+        
+        st.session_state.df = df_inicial
+        st.session_state.avl = avl
+        st.session_state.rb = rb
+        st.session_state.tempo_carga_avl = t_avl
+        st.session_state.tempo_carga_rb = t_rb
 
-def montar_arvore(df):
-    arvore = ArvoreAVL()
-    for _, linha in df.iterrows():
-        arvore.inserir(linha["isbn"], linha.to_dict())
-    return arvore
+avl = st.session_state.avl
+rb = st.session_state.rb
 
-
-if "arvore" not in st.session_state:
-    df_inicial = carregar_csv()
-    st.session_state.df = df_inicial
-    st.session_state.arvore = montar_arvore(df_inicial)
-
-arvore = st.session_state.arvore
-
+# --- MENU LATERAL (Cadastro) ---
 st.sidebar.header("Novo Livro")
 with st.sidebar.form("form_novo_livro", clear_on_submit=True):
     isbn = st.text_input("ISBN")
@@ -54,36 +55,67 @@ if enviar:
             "genero": genero.strip(),
             "status_leitura": status,
         }
-        if arvore.inserir(livro["isbn"], livro):
-            st.session_state.df = pd.concat(
-                [st.session_state.df, pd.DataFrame([livro])], ignore_index=True
-            )
+        # Insere em ambas as árvores em tempo real
+        inseriu_avl = avl.inserir(livro["isbn"], livro)
+        inseriu_rb = rb.inserir(livro["isbn"], livro)
+        
+        if inseriu_avl and inseriu_rb:
+            st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([livro])], ignore_index=True)
             os.makedirs("dados", exist_ok=True)
             st.session_state.df.to_csv(CAMINHO_CSV, index=False)
-            st.sidebar.success("Livro cadastrado com sucesso.")
+            st.sidebar.success("Livro cadastrado com sucesso nas duas árvores.")
         else:
             st.sidebar.warning("Já existe um livro com esse ISBN.")
 
-st.title("Biblioteca em Ordem")
-st.caption("Acervo organizado em Árvore AVL")
+# --- TELA PRINCIPAL ---
+st.title("📚 Biblioteca em Ordem")
+st.caption("Gerenciador de Acervo e Comparativo de Árvores Balanceadas (EDA2)")
 
+# Métricas das Árvores
 col1, col2, col3 = st.columns(3)
-col1.metric("Livros no acervo", arvore.tamanho)
-col2.metric("Altura da árvore AVL", arvore.altura_arvore())
-col3.metric("Rotações realizadas", arvore.rotacoes)
+col1.metric("Acervo Total", avl.tamanho)
+col2.metric("Altura (AVL vs RB)", f"{avl.altura_arvore()} / {rb.altura_arvore()}")
+col3.metric("Rotações (AVL vs RB)", f"{avl.rotacoes} / {rb.rotacoes}")
 
-st.subheader("Buscar por ISBN")
-isbn_busca = st.text_input("Digite o ISBN", key="busca_isbn")
+# --- BUSCA INSTANTÂNEA ---
+st.subheader("🔍 Buscar por ISBN")
+isbn_busca = st.text_input("Digite o ISBN exato para pesquisa", key="busca_isbn")
+
 if isbn_busca.strip():
-    resultado = arvore.buscar(isbn_busca)
-    if resultado:
-        st.success("Livro encontrado.")
-        st.table(pd.DataFrame([resultado]))
+    resultado_avl, tempo_b_avl = medir_tempo_busca(avl, isbn_busca)
+    resultado_rb, tempo_b_rb = medir_tempo_busca(rb, isbn_busca)
+    
+    if resultado_avl:
+        st.success("Livro encontrado com sucesso!")
+        st.table(pd.DataFrame([resultado_avl]))
+        
+        # Comparativo de tempo de busca específica
+        df_busca = pd.DataFrame({
+            "Estrutura": ["Árvore AVL", "Árvore Rubro-Negra"],
+            "Tempo de Busca (ms)": [tempo_b_avl, tempo_b_rb]
+        })
+        st.caption("Desempenho da pesquisa:")
+        st.bar_chart(df_busca.set_index("Estrutura"))
     else:
         st.error("Nenhum livro encontrado com esse ISBN.")
 
-st.subheader("Acervo (em ordem de ISBN)")
-registros = [dados for _, dados in arvore.em_ordem()]
+st.markdown("---")
+
+# --- ANÁLISE DE DESEMPENHO (Inserção em Lote) ---
+st.subheader("📊 Análise de Desempenho Global (Inserção em Lote)")
+st.write(f"Tempo total gasto para instanciar e inserir **{avl.tamanho}** livros lidos do CSV na memória.")
+
+df_carga = pd.DataFrame({
+    "Estrutura": ["Árvore AVL", "Árvore Rubro-Negra"],
+    "Tempo de Carga Total (ms)": [st.session_state.tempo_carga_avl, st.session_state.tempo_carga_rb]
+})
+st.bar_chart(df_carga.set_index("Estrutura"))
+
+st.markdown("---")
+
+# --- TABELA DE ACERVO ---
+st.subheader("📖 Acervo (Ordenado por ISBN)")
+registros = [dados for _, dados in avl.em_ordem()]
 if registros:
     st.dataframe(pd.DataFrame(registros, columns=COLUNAS), use_container_width=True)
 else:
