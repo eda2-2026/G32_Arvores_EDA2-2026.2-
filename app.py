@@ -63,3 +63,28 @@ if enviar:
             st.sidebar.success("Livro cadastrado com sucesso.")
         else:
             st.sidebar.warning("Já existe um livro com esse ISBN.")
+
+st.title("Biblioteca em Ordem")
+st.caption("Acervo organizado em Árvore AVL")
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Livros no acervo", arvore.tamanho)
+col2.metric("Altura da árvore AVL", arvore.altura_arvore())
+col3.metric("Rotações realizadas", arvore.rotacoes)
+
+st.subheader("Buscar por ISBN")
+isbn_busca = st.text_input("Digite o ISBN", key="busca_isbn")
+if isbn_busca.strip():
+    resultado = arvore.buscar(isbn_busca)
+    if resultado:
+        st.success("Livro encontrado.")
+        st.table(pd.DataFrame([resultado]))
+    else:
+        st.error("Nenhum livro encontrado com esse ISBN.")
+
+st.subheader("Acervo (em ordem de ISBN)")
+registros = [dados for _, dados in arvore.em_ordem()]
+if registros:
+    st.dataframe(pd.DataFrame(registros, columns=COLUNAS), use_container_width=True)
+else:
+    st.info("O acervo está vazio.")
