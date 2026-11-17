@@ -7,7 +7,7 @@
 | 2310391400 | Marjorie Mitzi | 
 
 !!! info "Vídeo da Apresentação"
-    **Assista à nossa apresentação:** [Insira o link aqui]
+    **Assista à nossa apresentação:** [Clique aqui para assistir no YouTube](https://youtu.be/eY8BeEmS4C0)
 
 ---
 
