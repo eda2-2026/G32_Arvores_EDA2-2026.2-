@@ -6,8 +6,8 @@
 | 231027005 | Maria Samara | 
 | 2310391400 | Marjorie Mitzi | 
 
-!!! info "Vídeo da Apresentação"
-    **Assista à nossa apresentação:** [Clique aqui para assistir no YouTube](https://youtu.be/eY8BeEmS4C0)
+> [!NOTE]
+> **Vídeo da Apresentação:** [Clique aqui para assistir no YouTube](https://youtu.be/eY8BeEmS4C0)
 
 ---
 
@@ -36,7 +36,7 @@ O **Biblioteca em Ordem** é uma aplicação em Python desenvolvida para gerenci
 biblioteca_ordem/
 ├── app.py                   # Interface web principal e integração
 ├── requirements.txt         # Dependências do sistema (streamlit==1.10.0, pandas==1.1.5)
-├── README.md                # Documentação MkDocs
+├── README.md                # Documentação
 ├── dados/
 │   └── livros.csv           # Banco de dados com 5.000 livros gerados para teste
 ├── src/
@@ -47,7 +47,7 @@ biblioteca_ordem/
 └── tests/
     ├── __init__.py
     └── test_arvores.py      # Validação rigorosa das regras de balanceamento
-```
+
 
 ## 5. Como executar o sistema
 
